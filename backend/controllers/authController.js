@@ -3,8 +3,11 @@
 import User from "../models/userModel.js";
 import Joi from "joi";
 import bcrypt from 'bcrypt';
+import 'dotenv/config';
+
 
 import { generateToken } from "../lib/utils.js";
+import cloudinary from "../lib/cloudinary.js";
 
 // 1. Define Joi schema
 const userValidationSchema = Joi.object({
@@ -13,6 +16,11 @@ const userValidationSchema = Joi.object({
   password: Joi.string().min(6).required(),
   profilePicture: Joi.string().uri().optional(),
 });
+const userloginvalidationSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().min(6).required(),
+});
+
 
 
 export const signup = async (req, res) => {
@@ -61,10 +69,6 @@ export const signup = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-const userloginvalidationSchema = Joi.object({
-  email: Joi.string().email().required(),
-  password: Joi.string().min(6).required(),
-});
 
 export const login = async (req, res) => {
   // Validate input
@@ -100,7 +104,6 @@ export const login = async (req, res) => {
   }
 };
 
-
 export const logout = (req, res) => {
   // Handle user logout logic here
 try {
@@ -111,3 +114,74 @@ try {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+
+
+export const updatecreds = async (req, res) => {
+  try {
+    const { profilePicture, fullName } = req.body;
+    const userId = req.user._id;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    if (!profilePicture && !fullName) {
+      return res.status(400).json({
+        message: "At least one field (profilePicture or fullName) is required",
+      });
+    }
+
+    const updateData = {};
+
+    if (fullName) {
+      updateData.fullName = fullName;
+    }
+
+    if (profilePicture) {
+      try {
+        const uploadResult = await cloudinary.uploader.upload(profilePicture, {
+          use_filename: true,
+          unique_filename: false,
+        });
+
+        if (uploadResult?.secure_url) {
+          updateData.profilePicture = uploadResult.secure_url;
+        }
+      } catch (uploadErr) {
+        return res.status(500).json({
+          message: "Failed to upload image to Cloudinary",
+          error: uploadErr.message,
+        });
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      message: "User credentials updated successfully",
+      user: updatedUser,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const checkAuth = async (req, res) => { 
+   try{res.status(200).json({
+        message: "Protected route accessed successfully",
+        user: req.user, // User data from middleware
+    });} 
+    catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });    
+    }
+}
