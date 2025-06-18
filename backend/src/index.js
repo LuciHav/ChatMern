@@ -3,8 +3,8 @@ import 'dotenv/config';
 import cookieParser from 'cookie-parser';
 import authRoutes from './routes/auth.js';
 import { connectDB } from '../lib/db.js';
-import '../lib/cloudinary.js'; // ✅ Correct if the file exists
-
+import messsagesRoutes from './routes/messages.js';
+import '../lib/cloudinary.js'; 
 const app = express();
 
 // ✅ Middlewares (order matters!)
@@ -13,6 +13,7 @@ app.use(cookieParser());         // Parse cookies (needed before route access)
 
 // ✅ Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/messages', messsagesRoutes);
 
 // ✅ Server start
 const port = process.env.PORT || 5001;
