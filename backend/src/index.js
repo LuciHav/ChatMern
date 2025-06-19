@@ -5,11 +5,18 @@ import authRoutes from './routes/auth.js';
 import { connectDB } from '../lib/db.js';
 import messsagesRoutes from './routes/messages.js';
 import '../lib/cloudinary.js'; 
+import cors from 'cors';
+
+
 const app = express();
 
 // ✅ Middlewares (order matters!)
 app.use(express.json());         // Parse JSON request bodies
 app.use(cookieParser());         // Parse cookies (needed before route access)
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173', // Allow frontend URL
+  credentials: true, // Allow cookies
+}));
 
 // ✅ Routes
 app.use('/api/auth', authRoutes);
