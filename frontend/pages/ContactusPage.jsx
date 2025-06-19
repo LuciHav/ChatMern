@@ -1,11 +1,11 @@
 import React from 'react'
 
-const Navbar = () => {
+const ContactusPage = () => {
   return (
     <div>
-      navbar
+      
     </div>
   )
 }
 
-export default Navbar
+export default ContactusPage
